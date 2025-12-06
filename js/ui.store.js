@@ -10,8 +10,9 @@
  * ---------------------------------------------------------
  */
 
-import { StoreAPI } from "./core.api.js";
+import { StoreAPI, ItemAPI } from "./core.api.js";
 import { getPlayerState, savePlayerState } from "./core.state.js";
+import { renderPlayerBar } from "./ui.player.js";
 
 let myStoreCache = null;
 
@@ -21,11 +22,12 @@ let myStoreCache = null;
 
 function ensurePlayerId() {
   const player = getPlayerState();
-  if (!player.id) {
-    player.id = crypto.randomUUID();
-    savePlayerState();
+  // Dans ton state, l'id s'appelle généralement "playerId"
+  if (!player.playerId) {
+    player.playerId = crypto.randomUUID();
+    savePlayerState(player);
   }
-  return player.id;
+  return player.playerId;
 }
 
 function getCurrency() {
@@ -35,7 +37,8 @@ function getCurrency() {
 function setCurrency(newValue) {
   const p = getPlayerState();
   p.currency = newValue;
-  savePlayerState();
+  savePlayerState(p);
+  renderPlayerBar();
 }
 
 function addItemToInventory(itemId) {
@@ -44,7 +47,7 @@ function addItemToInventory(itemId) {
   if (!Array.isArray(p.inventory.items)) p.inventory.items = [];
   if (!p.inventory.items.includes(itemId)) {
     p.inventory.items.push(itemId);
-    savePlayerState();
+    savePlayerState(p);
   }
 }
 
@@ -53,6 +56,8 @@ function addItemToInventory(itemId) {
 --------------------------------------------------------- */
 
 async function ensureMyStore() {
+  if (myStoreCache) return myStoreCache;
+
   const ownerId = ensurePlayerId();
 
   const nameInput = document.getElementById("store-name");
@@ -68,6 +73,8 @@ async function ensureMyStore() {
 
   const payload = { ownerId, name, description };
 
+  // Dans core.api.js, StoreAPI.createOrUpdateStore envoie { name, description }
+  // Le backend peut ignorer ownerId (identifié par le token).
   const store = await StoreAPI.createOrUpdateStore(payload);
   myStoreCache = store;
 
@@ -83,7 +90,8 @@ async function loadMyStoreAndItems() {
 
   try {
     const store = await ensureMyStore();
-    const items = await StoreAPI.getItems(store.id);
+    // Utilise l'API items dédiée
+    const items = await ItemAPI.listStoreItems(store.id);
     renderMyStoreItems(items);
   } catch (err) {
     console.error(err);
@@ -179,15 +187,14 @@ async function handleCreateItem() {
       storeId: store.id,
     };
 
-    // Pour les fichiers chiffrés, on enverra plus tard des métadonnées
-    // supplémentaires (fileId, notifyEmail, etc.). On garde déjà le champ :
     if (type === "encrypted-file" && notifyEmail) {
       payload.notifyEmail = notifyEmail;
     }
 
-    await StoreAPI.createItem(payload);
+    // Utilise ItemAPI pour créer l'item
+    await ItemAPI.createItem(payload);
     alert("Item ajouté à ton store !");
-    // Cleanup minimal
+
     nameInput.value = "";
     emojiInput.value = "";
     priceInput.value = "50";
@@ -217,7 +224,8 @@ async function doMarketSearch() {
   `;
 
   try {
-    let items = await StoreAPI.listAllItems();
+    // On récupère tous les items via ItemAPI
+    let items = await ItemAPI.listAllItems();
 
     if (q) {
       items = items.filter((i) => {
@@ -305,19 +313,24 @@ async function purchaseItem(item) {
   const playerId = ensurePlayerId();
 
   try {
-    await StoreAPI.purchase({
-      itemId: item.id,
-      playerId,
-      price: item.price,
+    // Ici, il faudra que tu ajoutes une route d'achat côté backend
+    // et une méthode correspondante dans core.api.js (par ex. StoreAPI.purchase).
+    // Pour l’instant, on fait juste un POST générique si tu le souhaites.
+    await fetch("/api/purchase", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        itemId: item.id,
+        playerId,
+        price: item.price,
+      }),
     });
 
-    // Mise à jour local state
     setCurrency(currentCurrency - item.price);
     addItemToInventory(item.id);
 
     alert(`Achat réussi : ${item.name}`);
 
-    // Rafraîchir l’affichage marché + mon store
     await doMarketSearch();
     await loadMyStoreAndItems();
   } catch (err) {
@@ -434,7 +447,6 @@ export function renderStore() {
     </div>
   `;
 
-  // Bind des boutons
   const marketBtn = document.getElementById("market-search-btn");
   const saveStoreBtn = document.getElementById("store-save-btn");
   const createItemBtn = document.getElementById("item-create-btn");

@@ -1,0 +1,175 @@
+/* ============================================================
+   THEME ROOT VARIABLES (customisable par utilisateur)
+   ============================================================ */
+:root {
+  --bg-main: #020617;
+  --bg-card: rgba(15, 23, 42, 0.96);
+  --accent: #7c3aed;
+  --accent-alt: #22c55e;
+  --text-main: #f9fafb;
+  --text-muted: #9ca3af;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+  --shadow-soft: 0 12px 35px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, sans-serif;
+  background: radial-gradient(circle at top, #111827, #020617);
+  color: var(--text-main);
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.app {
+  width: 100%;
+  max-width: 480px;
+  padding: 12px 12px 90px;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.app-header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.app-logo {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: radial-gradient(circle at 20% 0%, #a855f7, #1f2937);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+}
+
+.app-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  display: flex;
+  gap: 4px;
+}
+
+.app-title .highlight {
+  background: linear-gradient(90deg, #a855f7, #22c55e);
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.app-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   PLAYER BAR
+   ============================================================ */
+.player-bar {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), #020617);
+  border-radius: var(--radius-lg);
+  padding: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-soft);
+}
+
+/* Le JS remplira le contenu interne */
+
+/* ============================================================
+   TABS
+   ============================================================ */
+.tabs {
+  display: flex;
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: var(--radius-full);
+  padding: 4px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  margin-bottom: 12px;
+}
+
+.tab {
+  flex: 1;
+  padding: 6px 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+.tab.active {
+  background: linear-gradient(135deg, var(--accent-alt), var(--accent));
+  color: var(--text-main);
+  box-shadow: 0 8px 22px rgba(76, 29, 149, 0.6);
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+.section {
+  background: var(--bg-card);
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(148,163,184,0.4);
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 14px;
+}
+
+.hidden { display: none !important; }
+
+/* ============================================================
+   AI PANEL
+   ============================================================ */
+.ai-fab {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, var(--accent-alt), var(--accent));
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+}
+
+.ai-panel-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.ai-panel-backdrop.visible {
+  display: flex;
+}
+
+.ai-panel {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-card);
+  border-radius: 18px 18px 0 0;
+  padding: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.5);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (min-width: 550px) {
+  body { padding: 12px 0; }
+}

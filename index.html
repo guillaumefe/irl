@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>LifePath RPG</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#020617" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="app">
+
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="app-logo">🗺️</div>
+      <div class="app-title-block">
+        <h1 class="app-title">
+          <span class="highlight">LifePath</span> RPG
+        </h1>
+        <p class="app-subtitle">
+          Ta vie = un personnage de MMO. Chemins, niveaux, avatar, économie.
+        </p>
+      </div>
+    </header>
+
+    <!-- PLAYER BAR -->
+    <section id="player-bar" class="player-bar">
+      <!-- Rempli dynamiquement par ui.player.js -->
+    </section>
+
+    <!-- NAV TABS -->
+    <nav class="tabs">
+      <button class="tab active" data-tab="map">🗺️ Carte</button>
+      <button class="tab" data-tab="quests">📜 Quêtes</button>
+      <button class="tab" data-tab="community">🌐 Communauté</button>
+      <button class="tab" data-tab="avatar">🧍 Avatar</button>
+      <button class="tab" data-tab="store">🛍️ Stores</button>
+    </nav>
+
+    <!-- SECTIONS (remplies par les modules JS) -->
+    <section id="section-map" class="section"></section>
+    <section id="section-quests" class="section hidden"></section>
+    <section id="section-community" class="section hidden"></section>
+    <section id="section-avatar" class="section hidden"></section>
+    <section id="section-store" class="section hidden"></section>
+
+    <!-- AI FLOATING BUTTON -->
+    <button id="ai-fab" class="ai-fab">
+      🤖 Conseiller IA
+    </button>
+
+    <!-- AI PANEL -->
+    <div id="ai-panel-backdrop" class="ai-panel-backdrop">
+      <div class="ai-panel">
+        <!-- Rempli et contrôlé via ai.chat.js -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- JS modules -->
+  <script type="module" src="js/bootstrap.js"></script>
+
+  <!-- Service Worker registration -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js");
+    }
+  </script>
+</body>
+</html>

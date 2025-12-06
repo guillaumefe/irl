@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: lifepath-db
+    restart: always
+    environment:
+      POSTGRES_USER: lp_user
+      POSTGRES_PASSWORD: lp_pass
+      POSTGRES_DB: lifepath
+    volumes:
+      - lifepath_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"  # optionnel à exposer en externe
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lifepath-api
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql+psycopg2://lp_user:lp_pass@db:5432/lifepath
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"  # à définir dans ton env ou dans un .env
+      LIFEPATH_DEBUG: "0"
+    ports:
+      - "8000:8000"
+    volumes:
+      - lifepath_uploads:/app/uploads
+
+  # Optionnel : interface web pour la base
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: lifepath-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+volumes:
+  lifepath_pgdata:
+  lifepath_uploads:

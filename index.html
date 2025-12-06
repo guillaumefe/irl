@@ -2,76 +2,166 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <title>LifePath RPG</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- PWA -->
-  <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#020617" />
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#020617">
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="styles.css" />
+  <!-- Styles principaux -->
+  <link rel="stylesheet" href="/css/styles.css" />
+
 </head>
-
 <body>
-  <div class="app">
+
+  <div id="app">
 
     <!-- HEADER -->
     <header class="app-header">
       <div class="app-logo">🗺️</div>
+
       <div class="app-title-block">
-        <h1 class="app-title">
-          <span class="highlight">LifePath</span> RPG
-        </h1>
-        <p class="app-subtitle">
-          Ta vie = un personnage de MMO. Chemins, niveaux, avatar, économie.
-        </p>
+        <div class="app-title">
+          <span class="highlight">LifePath</span>
+          <span>RPG</span>
+        </div>
+        <div class="app-subtitle">
+          Ta vie = un personnage de MMO. Chemins, quêtes, avatar, stores, progression.
+        </div>
       </div>
     </header>
 
     <!-- PLAYER BAR -->
     <section id="player-bar" class="player-bar">
-      <!-- Rempli dynamiquement par ui.player.js -->
+      <div class="player-left">
+        <div class="avatar">
+          <div class="avatar-icon" id="player-avatar-emoji">🙂</div>
+          <div class="avatar-class" id="avatar-class">Life Mage</div>
+        </div>
+
+        <div class="player-meta">
+          <div class="player-name-row">
+            <strong id="player-name">Héros IRL</strong>
+            <span class="badge-lvl">LVL <span id="player-lvl">1</span></span>
+          </div>
+
+          <div class="xp-bar">
+            <div class="xp-bar-fill" id="xp-bar-fill"></div>
+          </div>
+
+          <div class="xp-label" id="xp-label">0 / 100 XP vers le prochain niveau</div>
+        </div>
+      </div>
+
+      <div class="player-right">
+        <div class="stats-row">
+          <div class="stat-pill">
+            <span class="label">🧠 Mind</span>
+            <span class="value" id="stat-mind">1</span>
+          </div>
+          <div class="stat-pill">
+            <span class="label">💪 Body</span>
+            <span class="value" id="stat-body">1</span>
+          </div>
+          <div class="stat-pill">
+            <span class="label">🤝 Social</span>
+            <span class="value" id="stat-social">1</span>
+          </div>
+        </div>
+
+        <div class="meta-row">
+          <span>Quêtes actives : <strong id="meta-active-quests">0</strong></span>
+          <span>Chemins : <strong id="meta-paths-count">0</strong></span>
+        </div>
+
+        <div class="meta-row" style="margin-top:2px;">
+          <span>💰 Solde : <strong id="meta-currency">0</strong></span>
+          <span id="meta-store-link"
+                style="cursor:pointer;text-decoration:underline;font-size:.64rem;">
+            🛍️ Mon store
+          </span>
+        </div>
+      </div>
     </section>
 
-    <!-- NAV TABS -->
+    <!-- TABS -->
     <nav class="tabs">
-      <button class="tab active" data-tab="map">🗺️ Carte</button>
-      <button class="tab" data-tab="quests">📜 Quêtes</button>
-      <button class="tab" data-tab="community">🌐 Communauté</button>
-      <button class="tab" data-tab="avatar">🧍 Avatar</button>
-      <button class="tab" data-tab="store">🛍️ Stores</button>
+      <div class="tab" data-tab="map">🗺️ <span>Carte</span></div>
+      <div class="tab" data-tab="quests">📜 <span>Quêtes</span></div>
+      <div class="tab" data-tab="community">🌐 <span>Communauté</span></div>
+      <div class="tab" data-tab="avatar">🧍 <span>Avatar</span></div>
+      <div class="tab" data-tab="store">🛍️ <span>Stores</span></div>
     </nav>
 
-    <!-- SECTIONS (remplies par les modules JS) -->
-    <section id="section-map" class="section"></section>
+    <!-- SECTIONS (UI RENDUES PAR JS) -->
+    <section id="section-map" class="section hidden"></section>
     <section id="section-quests" class="section hidden"></section>
     <section id="section-community" class="section hidden"></section>
     <section id="section-avatar" class="section hidden"></section>
     <section id="section-store" class="section hidden"></section>
 
-    <!-- AI FLOATING BUTTON -->
-    <button id="ai-fab" class="ai-fab">
-      🤖 Conseiller IA
-    </button>
-
-    <!-- AI PANEL -->
-    <div id="ai-panel-backdrop" class="ai-panel-backdrop">
-      <div class="ai-panel">
-        <!-- Rempli et contrôlé via ai.chat.js -->
-      </div>
-    </div>
-
   </div>
 
-  <!-- JS modules -->
-  <script type="module" src="js/bootstrap.js"></script>
+  <!-- Bouton IA -->
+  <button class="ai-fab" id="ai-fab">
+    <span class="icon">🤖</span>
+    <span>Conseiller IA</span>
+    <span class="badge">Bêta</span>
+  </button>
 
-  <!-- Service Worker registration -->
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js");
-    }
-  </script>
+  <!-- PANNEAU IA -->
+  <div class="ai-panel-backdrop" id="ai-panel-backdrop">
+    <div class="ai-panel">
+      <div class="ai-panel-header">
+        <div class="ai-panel-title-block">
+          <div class="ai-panel-title">🤖 Conseiller IA</div>
+          <div class="ai-panel-subtitle">
+            Il voit ton état de joueur mais tu gardes le contrôle.
+          </div>
+        </div>
+
+        <div class="ai-panel-header-actions">
+          <button class="btn-ghost small" id="ai-settings-toggle">⚙️ API</button>
+          <button class="btn-ghost small" id="ai-panel-close">✕</button>
+        </div>
+      </div>
+
+      <div class="ai-settings" id="ai-settings">
+        <div class="ai-settings-row">
+          <label for="ai-provider">Fournisseur</label>
+          <select id="ai-provider">
+            <option value="openai">OpenAI (serveur)</option>
+          </select>
+        </div>
+
+        <div class="ai-settings-row">
+          <label for="ai-model">Modèle</label>
+          <input id="ai-model" type="text" value="gpt-4o-mini" />
+        </div>
+
+        <div class="ai-settings-hint">
+          La clé API est côté serveur. Elle n’est jamais envoyée au navigateur.
+        </div>
+      </div>
+
+      <div id="ai-error-banner" class="ai-error hidden"></div>
+
+      <div class="ai-chat-log" id="ai-chat-log"></div>
+
+      <div class="ai-chat-footer">
+        <textarea id="ai-chat-input"
+                  class="ai-chat-input"
+                  placeholder="Pose une question…"
+        ></textarea>
+        <button class="ai-chat-send-btn" id="ai-chat-send">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS PRINCIPAL -->
+  <script type="module" src="/js/bootstrap.js"></script>
+
 </body>
 </html>

@@ -61,7 +61,7 @@ function detectSensitive(text) {
 }
 
 /* ---------------------------------------------------------
-   SYSTEM PROMPT
+   SYSTEM PROMPT & SNAPSHOT
 --------------------------------------------------------- */
 function getSystemPrompt() {
   return (
@@ -93,10 +93,11 @@ function qs(id) {
 }
 
 function appendBubble(role, text) {
-  const log = qs("ai-panel").querySelector(".ai-chat-log");
+  const log = qs("ai-chat-log");
+  if (!log) return;
   const msg = document.createElement("div");
   msg.className = `ai-chat-message ${role}`;
-  msg.innerHTML = `<div class="ai-chat-message-inner">${text}</div>`;
+  msg.innerHTML = `<div class="ai-chat-message-inner">${escapeHtml(text)}</div>`;
   log.appendChild(msg);
   log.scrollTop = log.scrollHeight;
 }
@@ -107,7 +108,8 @@ function appendSystemMessage(text) {
 
 /* “...” lors du traitement */
 function appendThinkingBubble() {
-  const log = qs("ai-panel").querySelector(".ai-chat-log");
+  const log = qs("ai-chat-log");
+  if (!log) return null;
   const msg = document.createElement("div");
   msg.className = "ai-chat-message assistant thinking";
   msg.innerHTML = `<div class="ai-chat-message-inner">…</div>`;
@@ -118,13 +120,15 @@ function appendThinkingBubble() {
 
 function clearError() {
   const banner = qs("ai-error-banner");
+  if (!banner) return;
   banner.classList.add("hidden");
   banner.innerHTML = "";
 }
 
 function showError(userMsg, technical = null) {
   const banner = qs("ai-error-banner");
-  let html = `<div>${userMsg}</div>`;
+  if (!banner) return;
+  let html = `<div>${escapeHtml(userMsg)}</div>`;
   if (technical) {
     html += `<details><summary>Détails techniques</summary><pre>${escapeHtml(
       typeof technical === "string"
@@ -163,7 +167,8 @@ async function sendChatMessage(userText) {
     appendSystemMessage(
       "Ton message n’a pas été envoyé pour protéger ta vie privée."
     );
-    qs("ai-chat-input").value = "";
+    const input = qs("ai-chat-input");
+    if (input) input.value = "";
     return;
   }
 
@@ -172,14 +177,17 @@ async function sendChatMessage(userText) {
   aiHistory.push({ role: "user", content: userText });
 
   const input = qs("ai-chat-input");
-  input.value = "";
-  input.style.height = "32px";
+  if (input) {
+    input.value = "";
+    input.style.height = "32px";
+  }
 
   /* bubble “…” */
   const thinking = appendThinkingBubble();
 
   isSending = true;
-  qs("ai-chat-send").disabled = true;
+  const sendBtn = qs("ai-chat-send");
+  if (sendBtn) sendBtn.disabled = true;
 
   /* ---- Construction messages pour API ---- */
   const snapshot = getPlayerSnapshot();
@@ -217,7 +225,7 @@ async function sendChatMessage(userText) {
         raw = raw || "(réponse non lisible)";
       }
 
-      thinking.remove();
+      if (thinking) thinking.remove();
       showError(
         buildFriendlyError(json, status),
         json || raw
@@ -230,20 +238,20 @@ async function sendChatMessage(userText) {
       data.choices?.[0]?.message?.content?.trim() ??
       "(Pas de réponse reçue)";
 
-    thinking.remove();
+    if (thinking) thinking.remove();
 
     appendBubble("assistant", reply);
     aiHistory.push({ role: "assistant", content: reply });
 
   } catch (err) {
-    thinking.remove();
+    if (thinking) thinking.remove();
     showError(
       "Erreur réseau ou serveur. Vérifie que le backend tourne.",
       String(err)
     );
   } finally {
     isSending = false;
-    qs("ai-chat-send").disabled = false;
+    if (sendBtn) sendBtn.disabled = false;
   }
 }
 
@@ -281,8 +289,6 @@ function buildFriendlyError(errorJson, status) {
    UI INITIALISATION
 --------------------------------------------------------- */
 export function initAIChat() {
-  buildPanelUI();
-
   const fab = qs("ai-fab");
   const backdrop = qs("ai-panel-backdrop");
   const sendBtn = qs("ai-chat-send");
@@ -291,6 +297,12 @@ export function initAIChat() {
   const providerSelect = qs("ai-provider");
   const settingsToggle = qs("ai-settings-toggle");
   const settingsPanel = qs("ai-settings");
+  const closeBtn = qs("ai-panel-close");
+
+  if (!fab || !backdrop || !sendBtn || !input || !modelInput || !providerSelect || !settingsToggle || !settingsPanel || !closeBtn) {
+    console.warn("[AI] Elements UI manquants, initAIChat annulée.");
+    return;
+  }
 
   /* Ouvrir panneau IA */
   fab.addEventListener("click", () => {
@@ -302,6 +314,11 @@ export function initAIChat() {
           "ta progression, tes objectifs ou tes priorités !"
       );
     }
+  });
+
+  /* Fermer via le bouton ✕ */
+  closeBtn.addEventListener("click", () => {
+    backdrop.classList.remove("visible");
   });
 
   /* Fermer en cliquant sur l’arrière-plan */
@@ -341,55 +358,5 @@ export function initAIChat() {
   /* Toggle settings */
   settingsToggle.addEventListener("click", () =>
     settingsPanel.classList.toggle("visible")
-  );
-}
-
-/* ---------------------------------------------------------
-   PANEL HTML BUILDER
---------------------------------------------------------- */
-function buildPanelUI() {
-  const panel = qs("ai-panel");
-  panel.innerHTML = `
-    <div class="ai-panel-header">
-      <div class="ai-panel-title-block">
-        <div class="ai-panel-title">🤖 Conseiller IA</div>
-        <div class="ai-panel-subtitle">Aide contextuelle basée sur ton état de joueur.</div>
-      </div>
-      <div class="ai-panel-header-actions">
-        <button class="btn-ghost small" id="ai-settings-toggle">⚙️ API</button>
-        <button class="btn-ghost small" id="ai-panel-close">✕</button>
-      </div>
-    </div>
-
-    <div class="ai-settings" id="ai-settings">
-      <label>Fournisseur</label>
-      <select id="ai-provider">
-        <option value="openai">OpenAI</option>
-      </select>
-
-      <label>Modèle</label>
-      <input type="text" id="ai-model" value="gpt-4o-mini" />
-
-      <div class="ai-settings-hint">
-        La clé API n'est jamais envoyée depuis le navigateur.
-      </div>
-    </div>
-
-    <div id="ai-error-banner" class="ai-error hidden"></div>
-
-    <div class="ai-chat-log"></div>
-
-    <div class="ai-chat-footer">
-      <textarea id="ai-chat-input"
-        class="ai-chat-input"
-        placeholder="Pose une question..."
-        rows="1"></textarea>
-      <button id="ai-chat-send" class="ai-chat-send-btn">➤</button>
-    </div>
-  `;
-
-  // attach close button
-  qs("ai-panel-close").addEventListener("click", () =>
-    qs("ai-panel-backdrop").classList.remove("visible")
   );
 }

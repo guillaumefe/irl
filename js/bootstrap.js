@@ -33,7 +33,7 @@ async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
 
   try {
-    await navigator.serviceWorker.register("/service-worker.js");
+    await navigator.serviceWorker.register("service-worker.js");
     console.log("[PWA] Service worker enregistré.");
   } catch (err) {
     console.warn("[PWA] Échec de l’enregistrement du SW :", err);

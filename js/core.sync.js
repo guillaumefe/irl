@@ -15,8 +15,10 @@
  * ---------------------------------------------------------
  */
 
-import { getPlayerState, savePlayerState, buildPlayerSnapshot } from "./core.state.js";
-import { AuthAPI } from "./core.api.js"; // optionnel si tu ajoutes auth
+import { buildPlayerSnapshot, savePlayerState } from "./core.state.js";
+// AuthAPI est prévu pour plus tard si tu ajoutes de l'auth côté serveur
+// import { AuthAPI } from "./core.api.js";
+
 const STORAGE_SYNC_META = "lifepath-sync-meta-v1";
 const STORAGE_ENCRYPT_KEY = "lifepath-sync-key"; // clé AES persistée si générée
 
@@ -49,10 +51,6 @@ export function bumpLocalVersion() {
   meta.localVersion++;
   saveSyncMeta(meta);
 }
-
-/* Chaque fois que ton app modifie l'état joueur :  
-   → tu peux appeler bumpLocalVersion()  
-   (optionnel : ou automatisé via core.state.js) */
 
 /* ---------------------------------------------------------
    CRYPTO AES-GCM
@@ -124,9 +122,6 @@ async function decryptState(payload) {
    MERGE INTELLIGENT
 --------------------------------------------------------- */
 
-/**
- * Merge récursif très robuste.
- */
 function deepMerge(local, remote) {
   if (typeof local !== "object" || typeof remote !== "object" || !local || !remote) {
     return remote ?? local;
@@ -148,7 +143,7 @@ function deepMerge(local, remote) {
   return merged;
 }
 
-/** 
+/**
  * Politique : 
  * - Si remoteVersion > localVersion → remote prioritaire
  * - Sinon → local prioritaire
@@ -166,7 +161,9 @@ function mergeStates(localState, remoteState, localVersion, remoteVersion) {
 --------------------------------------------------------- */
 
 async function sendSyncPayload(payload) {
-  const res = await fetch("/api/sync", {
+  // ⚠️ Sur GitHub Pages, ceci renverra 404 (pas de backend),
+  // mais c'est géré dans syncPlayerState() (catch + offline).
+  const res = await fetch("api/sync", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -239,7 +236,7 @@ export async function syncPlayerState({ encrypt = true } = {}) {
       newState: merged,
     };
   } catch (err) {
-    console.warn("Sync échouée, offline?", err);
+    console.warn("Sync échouée (offline ou backend absent ?) :", err);
 
     const meta2 = loadSyncMeta();
     meta2.lastSync = null;
@@ -254,14 +251,50 @@ export async function syncPlayerState({ encrypt = true } = {}) {
 }
 
 /* ---------------------------------------------------------
+   INIT SYNC (auto)
+--------------------------------------------------------- */
+
+/**
+ * À appeler au démarrage de l'app.
+ * - tente une sync si online
+ * - re-sync à chaque retour en ligne
+ * - re-sync quand l’onglet redevient visible
+ */
+export function initSync() {
+  const doSync = () => {
+    if (!navigator.onLine) return;
+    syncPlayerState().catch((e) => {
+      console.warn("Sync initiale échouée:", e);
+    });
+  };
+
+  // Sync immédiate si online
+  doSync();
+
+  // Quand on repasse online
+  window.addEventListener("online", doSync);
+
+  // Quand l’onglet redevient visible
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      doSync();
+    }
+  });
+}
+
+/* ---------------------------------------------------------
    EXPORT / IMPORT LOCAL (debug)
 --------------------------------------------------------- */
 
 export function exportLocalPlayerState() {
-  return JSON.stringify({
-    state: buildPlayerSnapshot(),
-    meta: loadSyncMeta(),
-  }, null, 2);
+  return JSON.stringify(
+    {
+      state: buildPlayerSnapshot(),
+      meta: loadSyncMeta(),
+    },
+    null,
+    2
+  );
 }
 
 export function importLocalPlayerState(jsonStr) {
